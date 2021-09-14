@@ -22,13 +22,13 @@ services:
       context: ../backend
       dockerfile: Dockerfile
     restart: always
+    depends_on:
+      - db
     volumes:
       - static_value:/code/static/
       - media_value:/code/media/
-    depends_on:
-      - db
     env_file:
-      - ./.env
+    - ./.env
 
   nginx:
     image: nginx:1.19.3
