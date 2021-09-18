@@ -256,4 +256,4 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return RecipeReadSerializer(
             instance,
             context={'request': self.context.get('request')}
-            ).data
+        ).data

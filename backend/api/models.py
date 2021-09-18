@@ -38,7 +38,7 @@ class Recipes(models.Model):
         verbose_name='Ингредиенты',
         related_name='ingredients_recipes',
         blank=False
-        )
+    )
     author = models.ForeignKey(CustomUser, on_delete=models.CASCADE,
                                verbose_name='Автор',
                                related_name='author_recipes',
@@ -53,7 +53,7 @@ class Recipes(models.Model):
     text = models.TextField(verbose_name='Описание', blank=False)
     cooking_time = models.PositiveIntegerField(
         verbose_name='Время приготовления (в минутах)', blank=False
-        )
+    )
 
     class Meta:
         verbose_name = 'Рецепт'
@@ -82,7 +82,7 @@ class RecipeIngredient(models.Model):
         constraints = [models.UniqueConstraint(
             fields=['recipe', 'ingredient'],
             name='recipe_ingredient_unique'
-            )]
+        )]
 
 
 class ShoppingCart(models.Model):

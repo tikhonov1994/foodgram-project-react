@@ -8,10 +8,10 @@ environ.Env.read_env()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'j#fsp&g9x)n&b)+o0bnbgd3pmc5_n1vfd!8cthmw!wel3-!2pi'
+SECRET_KEY = env('SECRET_KEY')
 
 
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -32,7 +32,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'djoser',
     'drf_spectacular',
-    ]
+]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

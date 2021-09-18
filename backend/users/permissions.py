@@ -10,6 +10,6 @@ class GetPost(IsAuthenticated):
 
 class CurrentUserOrAdmin(AllowAny):
     def has_object_permission(self, request, view, obj):
-        return (request.user.is_staff or
-                request.user == obj.author or
-                request.method in SAFE_METHODS)
+        return (request.user.is_staff
+                or request.user == obj.author
+                or request.method in SAFE_METHODS)
