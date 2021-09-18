@@ -13,7 +13,6 @@ class TagAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('name',)}
 
 
-
 class RecipeIngredientInLine(admin.TabularInline):
     model = models.RecipeIngredient
 

@@ -1,20 +1,24 @@
-import django_filters
+from django_filters import BooleanFilter, CharFilter, FilterSet
 
 from .models import Recipes
 
 
-class RecipeFilter(django_filters.FilterSet):
-    tags = django_filters.AllValuesMultipleFilter(
-        field_name='tags__slug',
-    )
-    is_favorited = django_filters.BooleanFilter(method='get_favorite')
-    is_in_shopping_cart = django_filters.BooleanFilter(
+class RecipeFilter(FilterSet):
+    tags = CharFilter(field_name='tags__slug', method='filter_tags')
+    is_favorited = BooleanFilter(method='get_favorite')
+    is_in_shopping_cart = BooleanFilter(
         method='get_is_in_shopping_cart'
     )
 
     class Meta:
         model = Recipes
         fields = ('is_favorited', 'is_in_shopping_cart', 'author', 'tags')
+
+    def filter_tags(self, queryset, slug, tags):
+        tags = self.request.query_params.getlist('tags')
+        return queryset.filter(
+            tags__slug__in=tags
+        ).distinct()
 
     def get_favorite(self, queryset, name, value):
         user = self.request.user

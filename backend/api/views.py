@@ -1,22 +1,24 @@
+import django_filters
 from django.http.response import HttpResponse
 from django.utils import timezone
-import django_filters
 from reportlab.pdfbase import pdfmetrics  # for cyrillic
 from reportlab.pdfbase.ttfonts import TTFont  # for cyrillic
 from reportlab.pdfgen import canvas
-from rest_framework import status, filters
+from rest_framework import filters, status
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.viewsets import (GenericViewSet, ModelViewSet, ReadOnlyModelViewSet,
-                                     mixins)
-
-from .models import (Tags, Ingredients, Recipes, RecipeIngredient, Favorite, ShoppingCart)
-from .serializers import TagSerializer, IngredientSerializer, RecipeSerializer, RecipeInShoppingCart
-from .filters import RecipeFilter
-from .paginators import PageNumberPaginatorModified
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from users.permissions import CurrentUserOrAdmin, GetPost
+
+from .filters import RecipeFilter
+from .models import (Favorite, Ingredients, RecipeIngredient, Recipes,
+                     ShoppingCart, Tags)
+from .paginators import PageNumberPaginatorModified
+from .serializers import (FavouriteSerializer, IngredientSerializer,
+                          RecipeReadSerializer, RecipeWriteSerializer,
+                          TagSerializer)
 
 
 class TagViewSet(ReadOnlyModelViewSet):
@@ -33,6 +35,10 @@ class IngredientViewSet(ReadOnlyModelViewSet):
     pagination_class = None
     filter_backends = [filters.SearchFilter]
 
+    def get_queryset(self):
+        query = self.request.GET.get('name')
+        return Ingredients.objects.filter(name__istartswith=query.lower())
+
 
 class RecipeViewSet(ModelViewSet):
     queryset = Recipes.objects.all().order_by('-id')
@@ -43,8 +49,13 @@ class RecipeViewSet(ModelViewSet):
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
-            return RecipeSerializer
-        return RecipeSerializer
+            return RecipeReadSerializer
+        return RecipeWriteSerializer
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({'request': self.request})
+        return context
 
     def perform_create(self, serializer):
         return serializer.save(author=self.request.user)
@@ -56,9 +67,9 @@ class RecipeViewSet(ModelViewSet):
         recipe = get_object_or_404(Recipes, pk=pk)
         user = request.user
         if request.method == 'GET':
-            if not user.is_favorited.filter(recipe=recipe).exists():
+            if not Favorite.objects.filter(user=user, recipe=recipe).exists():
                 Favorite.objects.create(user=user, recipe=recipe)
-                serializer = RecipeSerializer(
+                serializer = FavouriteSerializer(
                     recipe, context={'request': request})
                 return Response(data=serializer.data,
                                 status=status.HTTP_201_CREATED)
@@ -66,7 +77,7 @@ class RecipeViewSet(ModelViewSet):
                 'errors': 'Этот рецепт уже есть в избранном'
             }
             return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
-        if not user.is_favorited.filter(recipe=recipe).exists():
+        if not Favorite.objects.filter(user=user, recipe=recipe).exists():
             data = {
                 'errors': 'Этого рецепта не было в вашем избранном'
             }
@@ -81,9 +92,10 @@ class RecipeViewSet(ModelViewSet):
         recipe = get_object_or_404(Recipes, pk=pk)
         user = request.user
         if request.method == 'GET':
-            if not user.is_in_shopping_cart.filter(recipe=recipe).exists():
+            if not ShoppingCart.objects.filter(user=user,
+                                               recipe=recipe).exists():
                 ShoppingCart.objects.create(user=user, recipe=recipe)
-                serializer = RecipeInShoppingCart(
+                serializer = FavouriteSerializer(
                     recipe, context={'request': request})
                 return Response(data=serializer.data,
                                 status=status.HTTP_201_CREATED)
@@ -91,7 +103,7 @@ class RecipeViewSet(ModelViewSet):
                 'errors': 'Этот рецепт уже есть в списке покупок'
             }
             return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
-        if not user.is_in_shopping_cart.filter(recipe=recipe).exists():
+        if not ShoppingCart.objects.filter(user=user, recipe=recipe).exists():
             data = {
                 'errors': 'Этого рецепта не было в вашем списке покупок'
             }
@@ -104,7 +116,7 @@ class RecipeViewSet(ModelViewSet):
             permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
         user = request.user
-        shopping_cart = user.is_in_shopping_cart.all()
+        shopping_cart = ShoppingCart.objects.filter(user=user)
         shopping_list = {}
         for item in shopping_cart:
             recipe = item.recipe
