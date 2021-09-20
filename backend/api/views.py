@@ -1,6 +1,7 @@
-import django_filters
 from django.http.response import HttpResponse
 from django.utils import timezone
+
+import django_filters
 from reportlab.pdfbase import pdfmetrics  # for cyrillic
 from reportlab.pdfbase.ttfonts import TTFont  # for cyrillic
 from reportlab.pdfgen import canvas
@@ -13,8 +14,8 @@ from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from users.permissions import CurrentUserOrAdmin, GetPost
 
 from .filters import RecipeFilter
-from .models import (Favorite, Ingredients, RecipeIngredient, Recipes,
-                     ShoppingCart, Tags)
+from .models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                     ShoppingCart, Tag)
 from .paginators import PageNumberPaginatorModified
 from .serializers import (FavouriteSerializer, IngredientSerializer,
                           RecipeReadSerializer, RecipeWriteSerializer,
@@ -22,14 +23,14 @@ from .serializers import (FavouriteSerializer, IngredientSerializer,
 
 
 class TagViewSet(ReadOnlyModelViewSet):
-    queryset = Tags.objects.all()
+    queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = [AllowAny]
     pagination_class = None
 
 
 class IngredientViewSet(ReadOnlyModelViewSet):
-    queryset = Ingredients.objects.all()
+    queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     permission_classes = [AllowAny]
     pagination_class = None
@@ -37,11 +38,11 @@ class IngredientViewSet(ReadOnlyModelViewSet):
 
     def get_queryset(self):
         query = self.request.GET.get('name')
-        return Ingredients.objects.filter(name__istartswith=query.lower())
+        return Ingredient.objects.filter(name__istartswith=query.lower())
 
 
 class RecipeViewSet(ModelViewSet):
-    queryset = Recipes.objects.all().order_by('-id')
+    queryset = Recipe.objects.all().order_by('-id')
     permission_classes = [GetPost, CurrentUserOrAdmin]
     pagination_class = PageNumberPaginatorModified
     filter_backends = [django_filters.rest_framework.DjangoFilterBackend]
@@ -58,13 +59,13 @@ class RecipeViewSet(ModelViewSet):
         return context
 
     def perform_create(self, serializer):
-        return serializer.save(author=self.request.user)
+        serializer.save(author=self.request.user)
 
     @action(detail=True,
             methods=['get', 'delete'],
             permission_classes=[IsAuthenticated])
     def favorite(self, request, pk):
-        recipe = get_object_or_404(Recipes, pk=pk)
+        recipe = get_object_or_404(Recipe, pk=pk)
         user = request.user
         if request.method == 'GET':
             if not Favorite.objects.filter(user=user, recipe=recipe).exists():
@@ -89,7 +90,7 @@ class RecipeViewSet(ModelViewSet):
             methods=['get', 'delete'],
             permission_classes=[IsAuthenticated])
     def shopping_cart(self, request, pk):
-        recipe = get_object_or_404(Recipes, pk=pk)
+        recipe = get_object_or_404(Recipe, pk=pk)
         user = request.user
         if request.method == 'GET':
             if not ShoppingCart.objects.filter(user=user,
@@ -118,20 +119,18 @@ class RecipeViewSet(ModelViewSet):
         user = request.user
         shopping_cart = ShoppingCart.objects.filter(user=user)
         shopping_list = {}
-        for item in shopping_cart:
-            recipe = item.recipe
-            ingredients = RecipeIngredient.objects.filter(recipe=recipe)
-            for ingredient in ingredients:
-                name = ingredient.ingredient.name
-                measurement_unit = ingredient.ingredient.measurement_unit
-                amount = ingredient.amount
-                if name not in shopping_list:
-                    shopping_list[name] = {
-                        'measurement_unit': measurement_unit,
-                        'amount': amount
-                    }
-                else:
-                    shopping_list[name]['amount'] += amount
+        ingredients = RecipeIngredient.objects.filter(recipe__in=shopping_cart.values_list('recipe'))
+        for ingredient in ingredients:
+            name = ingredient.ingredient.name
+            measurement_unit = ingredient.ingredient.measurement_unit
+            amount = ingredient.amount
+            if name not in shopping_list:
+                shopping_list[name] = {
+                    'measurement_unit': measurement_unit,
+                    'amount': amount
+                }
+            else:
+                shopping_list[name]['amount'] += amount
         file_name = 'СПИСОК ПОКУПОК'
         doc_title = 'СПИСОК ПОКУПОК ДЛЯ РЕЦЕПТОВ'
         title = 'СПИСОК ПОКУПОК'

@@ -4,7 +4,7 @@ from django.utils.html import format_html
 from . import models
 
 
-@admin.register(models.Tags)
+@admin.register(models.Tag)
 class TagAdmin(admin.ModelAdmin):
     list_display = ('name', 'slug', 'color')
     search_fields = ('name', 'slug')
@@ -17,7 +17,7 @@ class RecipeIngredientInLine(admin.TabularInline):
     model = models.RecipeIngredient
 
 
-@admin.register(models.Ingredients)
+@admin.register(models.Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
     list_display = ('name', 'measurement_unit')
     search_fields = ('name',)
@@ -31,7 +31,7 @@ class SubscriptionAdmin(admin.ModelAdmin):
     list_filter = ('user', 'author')
 
 
-@admin.register(models.Recipes)
+@admin.register(models.Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     list_display = ('author', 'name', 'image_tag')
     search_fields = ('user', 'author')

@@ -1,6 +1,7 @@
+from django.contrib.auth import get_user_model
+
 from api.models import Subscription
 from api.serializers import SubscribeSerializer
-from django.contrib.auth import get_user_model
 from djoser.serializers import SetPasswordSerializer
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
