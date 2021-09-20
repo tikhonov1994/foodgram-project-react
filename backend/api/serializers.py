@@ -172,7 +172,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         fields = ('id', 'author', 'name', 'text', 'image',
                   'ingredients', 'tags', 'cooking_time')
 
-
     def validate_ingredients(self, data):
         ingredients_set = set()
         for item in data:
@@ -205,7 +204,11 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         ingredients_data = validated_data.pop('ingredients')
         tags_data = validated_data.pop('tags')
         recipe = Recipe.objects.create(**validated_data)
-        RecipeWriteSerializer.data_collection(recipe=recipe, ingredients_data=ingredients_data, tags_data=tags_data)
+        RecipeWriteSerializer.data_collection(
+            recipe=recipe,
+            ingredients_data=ingredients_data,
+            tags_data=tags_data
+        )
         return recipe
 
     def update(self, instance, validated_data):
@@ -218,7 +221,11 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             'cooking_time', instance.cooking_time
         )
         RecipeIngredient.objects.filter(recipe=instance).delete()
-        RecipeWriteSerializer.data_collection(recipe=instance, ingredients_data=ingredients_data, tags_data=tags_data)
+        RecipeWriteSerializer.data_collection(
+            recipe=instance,
+            ingredients_data=ingredients_data,
+            tags_data=tags_data
+        )
         return instance
 
     def to_representation(self, instance):
