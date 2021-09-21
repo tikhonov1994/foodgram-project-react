@@ -5,7 +5,7 @@ import django_filters
 from reportlab.pdfbase import pdfmetrics  # for cyrillic
 from reportlab.pdfbase.ttfonts import TTFont  # for cyrillic
 from reportlab.pdfgen import canvas
-from rest_framework import filters, status
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import AllowAny, IsAuthenticated
