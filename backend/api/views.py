@@ -34,7 +34,6 @@ class IngredientViewSet(ReadOnlyModelViewSet):
     serializer_class = IngredientSerializer
     permission_classes = [AllowAny]
     pagination_class = None
-    filter_backends = [filters.SearchFilter]
 
     def get_queryset(self):
         query = self.request.GET.get('name')

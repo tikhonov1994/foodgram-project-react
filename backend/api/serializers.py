@@ -1,10 +1,10 @@
 from rest_framework import serializers
 from rest_framework.generics import get_object_or_404
-from users.models import CustomUser
-from users.serializers import UserSerializer
 
 from .fields import Base64ImageField
 from .models import Ingredient, Recipe, RecipeIngredient, Subscription, Tag
+from users.models import CustomUser
+from users.serializers import UserSerializer
 
 
 class RecipeSerializer(serializers.ModelSerializer):
@@ -183,7 +183,13 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             identifier = item.get('id')
             if identifier in ingredients_set:
                 raise serializers.ValidationError(
-                    'Ингредиент в рецепте не должен повторяться.')
+                    'Ингредиент в рецепте не должен повторяться.'
+                )
+            ingredients = item.get('ingredients')
+            if not ingredients:
+                raise serializers.ValidationError(
+                    'В рецепте должны быть ингредиенты!'
+                )
             ingredients_set.add(identifier)
         return data
 
